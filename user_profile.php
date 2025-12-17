@@ -13,7 +13,6 @@ $msg_type = "";
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
-    // Update Personal Info
     if (isset($_POST['update_info'])) {
         $fullname = $_POST['fullname'];
         $contact  = $_POST['contact']; 

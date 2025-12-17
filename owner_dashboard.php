@@ -64,6 +64,18 @@ if (isset($_GET['delete'])) {
     exit();
 }
 
+if (isset($_POST['update_booking_status'])) {
+    $booking_id = $_POST['booking_id'];
+    $new_status = $_POST['update_booking_status']; 
+    
+    $stmt = $conn->prepare("UPDATE bookings SET status=? WHERE id=?");
+    $stmt->bind_param("si", $new_status, $booking_id);
+    $stmt->execute();
+    
+    header("Location: owner_dashboard.php");
+    exit();
+}
+
 $edit_mode = false;
 $edit_data = ['name'=>'', 'price_day'=>'', 'price_night'=>'', 'price_24h'=>'', 'capacity'=>'', 'image_url'=>'', 'id'=>''];
 
@@ -265,8 +277,7 @@ $cottages = $conn->query("SELECT * FROM cottages");
                             <th class="p-4 font-bold">Type</th>
                             <th class="p-4 font-bold">Date</th>
                             <th class="p-4 font-bold">Total</th>
-                            <th class="p-4 font-bold">Status</th>
-                        </tr>
+                            <th class="p-4 font-bold">Status</th> <th class="p-4 font-bold text-center">Actions</th> </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         <?php while($b = $bookings->fetch_assoc()): ?>
@@ -275,13 +286,7 @@ $cottages = $conn->query("SELECT * FROM cottages");
                             <td class="p-4 font-medium text-gray-700"><?= $b['guest_name'] ?></td>
                             <td class="p-4 text-gray-600"><?= $b['cottage_name'] ?></td>
                             <td class="p-4">
-                                <?php 
-                                    $badgeColor = 'bg-gray-100 text-gray-700';
-                                    if($b['tour_type'] == 'Day Tour') $badgeColor = 'bg-orange-100 text-orange-700';
-                                    elseif($b['tour_type'] == 'Night Stay') $badgeColor = 'bg-indigo-100 text-indigo-700';
-                                    elseif($b['tour_type'] == '24 Hours') $badgeColor = 'bg-purple-100 text-purple-700';
-                                ?>
-                                <span class="px-3 py-1 rounded-full text-xs font-bold <?= $badgeColor ?>">
+                                <span class="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700">
                                     <?= $b['tour_type'] ?>
                                 </span>
                             </td>
@@ -289,8 +294,45 @@ $cottages = $conn->query("SELECT * FROM cottages");
                                 <?= date("M d, Y", strtotime($b['check_in'])) ?>
                             </td>
                             <td class="p-4 font-bold text-gray-800">₱<?= number_format($b['total_price']) ?></td>
+
                             <td class="p-4">
-                                <span class="text-green-600 font-bold text-xs uppercase tracking-wide">Confirmed</span>
+                                <?php 
+                                    $status = strtolower($b['status']); 
+                                    $statusColor = 'bg-gray-100 text-gray-600'; // Default Pending
+
+                                    if($status == 'confirmed') {
+                                        $statusColor = 'bg-green-100 text-green-700';
+                                    } elseif($status == 'cancelled') {
+                                        $statusColor = 'bg-red-100 text-red-700';
+                                    } elseif($status == 'pending') {
+                                        $statusColor = 'bg-yellow-100 text-yellow-700';
+                                    }
+                                ?>
+                                <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide <?= $statusColor ?>">
+                                    <?= $b['status'] ?>
+                                </span>
+                            </td>
+                                
+                            <td class="p-4 text-center">
+                                <?php if(strtolower($b['status']) == 'pending'): ?>
+                                    <form method="POST" class="flex items-center justify-center gap-2">
+                                        <input type="hidden" name="booking_id" value="<?= $b['id'] ?>">
+
+                                        <button type="submit" name="update_booking_status" value="Confirmed" 
+                                                class="p-2 bg-green-500 hover:bg-green-600 text-white rounded-lg shadow-sm transition"
+                                                title="Confirm Reservation" onclick="return confirm('Are you sure you want to CONFIRM this reservation?')">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                        </button>
+                                
+                                        <button type="submit" name="update_booking_status" value="Cancelled"
+                                                class="p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow-sm transition"
+                                                title="Cancel Reservation" onclick="return confirm('Are you sure you want to CANCEL this reservation?')">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                        </button>
+                                    </form>
+                                <?php else: ?>
+                                    <span class="text-xs text-gray-400 italic">Action taken</span>
+                                <?php endif; ?>
                             </td>
                         </tr>
                         <?php endwhile; ?>
