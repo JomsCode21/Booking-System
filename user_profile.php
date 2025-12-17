@@ -11,6 +11,13 @@ $uid = $_SESSION['user_id'];
 $message = "";
 $msg_type = "";
 
+if (isset($_SESSION['flash_message'])) {
+    $message = $_SESSION['flash_message'];
+    $msg_type = $_SESSION['flash_type'];
+    unset($_SESSION['flash_message']);
+    unset($_SESSION['flash_type']);
+}
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
     if (isset($_POST['update_info'])) {
@@ -91,8 +98,15 @@ $history = $history_query->get_result();
         <div class="lg:col-span-1 space-y-6">
             
             <?php if ($message): ?>
-                <div class="p-4 rounded-lg <?= $msg_type == 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' ?>">
-                    <?= $message ?>
+                <div class="p-4 rounded-lg flex items-start gap-2 <?= $msg_type == 'success' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200' ?>">
+                    <svg class="w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <?php if($msg_type == 'success'): ?>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        <?php else: ?>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        <?php endif; ?>
+                    </svg>
+                    <span><?= $message ?></span>
                 </div>
             <?php endif; ?>
 
@@ -151,12 +165,12 @@ $history = $history_query->get_result();
                                 <th class="p-4">Details</th>
                                 <th class="p-4">Total</th>
                                 <th class="p-4">Status</th>
-                            </tr>
+                                <th class="p-4 text-center">Action</th> </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
                             <?php while($row = $history->fetch_assoc()): 
                                 // Color logic for status
-                                $status_color = 'bg-yellow-100 text-yellow-800'; // Default Pending
+                                $status_color = 'bg-yellow-100 text-yellow-800'; 
                                 if($row['status'] == 'Confirmed' || $row['status'] == 'Paid') $status_color = 'bg-green-100 text-green-800';
                                 if($row['status'] == 'Cancelled') $status_color = 'bg-red-100 text-red-800';
                             ?>
@@ -174,6 +188,19 @@ $history = $history_query->get_result();
                                     <span class="px-3 py-1 rounded-full text-xs font-bold <?= $status_color ?>">
                                         <?= $row['status'] ?>
                                     </span>
+                                </td>
+                                <td class="p-4 text-center">
+                                    <?php if ($row['status'] != 'Cancelled' && $row['status'] != 'Paid'): ?>
+                                        <a href="cancel_booking.php?ref=<?= $row['ref_number'] ?>" 
+                                           onclick="return confirm('Are you sure you want to cancel this booking? This action cannot be undone.')"
+                                           class="text-red-500 hover:text-red-700 font-bold text-xs border border-red-500 hover:bg-red-50 px-3 py-1 rounded transition">
+                                            Cancel
+                                        </a>
+                                    <?php elseif($row['status'] == 'Cancelled'): ?>
+                                        <span class="text-gray-400 text-xs italic">Cancelled</span>
+                                    <?php else: ?>
+                                        <span class="text-gray-400 text-xs italic">-</span>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                             <?php endwhile; ?>
