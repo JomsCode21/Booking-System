@@ -103,7 +103,14 @@ $step = $_SESSION['booking']['step'];
                     <span class="font-bold text-xl md:text-2xl text-cyan-700 tracking-wide uppercase">Cymae Booking</span>
                 </div>
                 <div>
-                    <a href="logout.php" class="text-sm font-medium text-red-500 hover:text-red-700 transition">Log Out</a>
+                    <div class="flex items-center gap-4">
+                        <a href="user_profile.php" class="text-sm font-medium text-gray-600 hover:text-cyan-600 transition flex items-center gap-1">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                            My Profile
+                        </a>
+                        <span class="text-gray-300">|</span>
+                        <a href="logout.php" class="text-sm font-medium text-red-500 hover:text-red-700 transition">Log Out</a>
+                    </div>
                 </div>
             </div>
         </div>
