@@ -13,10 +13,14 @@ if (isset($_GET['action']) && $_GET['action'] == 'new') {
     exit();
 }
 
+// Initialize booking session if not set
 if (!isset($_SESSION['booking'])) { $_SESSION['booking'] = ['step' => 1]; }
 
 $error = null; 
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    
+    // Select Cottage
     if (isset($_POST['step1'])) {
         $_SESSION['booking']['cottage_name'] = $_POST['cottage_name'];
         $_SESSION['booking']['price_day'] = $_POST['price_day'];
@@ -26,12 +30,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $_SESSION['booking']['step'] = 2;
     } 
 
+    // Select Date & Tour Type
     elseif (isset($_POST['step2'])) {
         $date = $_POST['date'];
         $type = $_POST['tour_type'];
         $cottage = $_SESSION['booking']['cottage_name'];
         
-        // Check availability
+        // Check database availability
         $stmt = $conn->prepare("SELECT COUNT(*) as count FROM bookings WHERE cottage_name = ? AND check_in = ? AND tour_type = ? AND status != 'Cancelled'");
         $stmt->bind_param("sss", $cottage, $date, $type);
         $stmt->execute();
@@ -42,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             // SLOT IS TAKEN
             $error = "Sorry! The <strong>$cottage</strong> is already fully booked for a <strong>$type</strong> on " . date('F j, Y', strtotime($date)) . ".";
         } else {
-            // SLOT IS FREE - PROCEED
+            // SLOT IS FREE - Set prices
             $_SESSION['booking']['date'] = $date;
             $_SESSION['booking']['tour_type'] = $type; 
 
@@ -58,11 +63,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     } 
     
+    // Contact Details
     elseif (isset($_POST['step3'])) {
         $_SESSION['booking']['contact'] = $_POST['contact'];
         $_SESSION['booking']['step'] = 4;
     } 
 
+    // Final Confirmation
     elseif (isset($_POST['step4'])) {
         $ref = "BK-" . strtoupper(substr(md5(time()), 0, 6));
         $uid = $_SESSION['user_id'];
@@ -144,6 +151,7 @@ $step = $_SESSION['booking']['step'];
                 <?php 
                 $cottages = $conn->query("SELECT * FROM cottages");
                 while($c = $cottages->fetch_assoc()): 
+                    $c['price_24h'] = $c['price_24h'] ?? $c['price 24h'] ?? 0;
                 ?>
                 <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition duration-300 border border-gray-100 flex flex-col">
                     <div class="relative h-56">
@@ -175,7 +183,8 @@ $step = $_SESSION['booking']['step'];
                             <input type="hidden" name="cottage_name" value="<?= $c['name'] ?>">
                             <input type="hidden" name="price_day" value="<?= $c['price_day'] ?>">
                             <input type="hidden" name="price_night" value="<?= $c['price_night'] ?>">
-                            <input type="hidden" name="price_24h" value="<?= $c['price_24h'] ?>"> <input type="hidden" name="image_url" value="<?= $c['image_url'] ?>">
+                            <input type="hidden" name="price_24h" value="<?= $c['price_24h'] ?>"> 
+                            <input type="hidden" name="image_url" value="<?= $c['image_url'] ?>">
                             <button type="submit" name="step1" class="w-full py-3 bg-cyan-500 hover:bg-cyan-600 text-white font-bold rounded-lg transition shadow-md">
                                 Book This Cottage
                             </button>
