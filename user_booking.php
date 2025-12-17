@@ -155,7 +155,9 @@ $step = $_SESSION['booking']['step'];
                 ?>
                 <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition duration-300 border border-gray-100 flex flex-col">
                     <div class="relative h-56">
-                        <img src="<?= $c['image_url'] ?>" alt="<?= $c['name'] ?>" class="w-full h-full object-cover">
+                        <img src="<?= file_exists($c['image_url']) ? $c['image_url'] : 'https://via.placeholder.com/400x300?text=No+Image' ?>" 
+                            alt="<?= $c['name'] ?>" 
+                            class="w-full h-full object-cover">
                         <div class="absolute bottom-0 left-0 bg-gradient-to-t from-black/70 to-transparent w-full p-4">
                             <h3 class="text-white font-bold text-xl"><?= $c['name'] ?></h3>
                             <p class="text-white/80 text-xs"><?= $c['capacity'] ?></p>
