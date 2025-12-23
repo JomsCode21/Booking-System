@@ -277,6 +277,7 @@ $cottages = $conn->query("SELECT * FROM cottages");
                             <th class="p-4 font-bold">Type</th>
                             <th class="p-4 font-bold">Date</th>
                             <th class="p-4 font-bold">Total</th>
+                            <th class="p-4 font-bold">Proof</th>
                             <th class="p-4 font-bold">Status</th> <th class="p-4 font-bold text-center">Actions</th> </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
@@ -294,6 +295,17 @@ $cottages = $conn->query("SELECT * FROM cottages");
                                 <?= date("M d, Y", strtotime($b['check_in'])) ?>
                             </td>
                             <td class="p-4 font-bold text-gray-800">₱<?= number_format($b['total_price']) ?></td>
+
+                            <td class="p-4">
+                                <?php if(!empty($b['payment_proof'])): ?>
+                                    <a href="<?= $b['payment_proof'] ?>" target="_blank" class="flex items-center gap-1 text-cyan-600 hover:underline text-xs font-bold">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                        View Proof
+                                    </a>
+                                <?php else: ?>
+                                    <span class="text-xs text-red-400 italic">No proof</span>
+                                <?php endif; ?>
+                            </td>
 
                             <td class="p-4">
                                 <?php 

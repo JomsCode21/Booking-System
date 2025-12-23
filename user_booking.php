@@ -69,13 +69,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $_SESSION['booking']['step'] = 4;
     } 
 
-    // Final Confirmation
     elseif (isset($_POST['step4'])) {
         $ref = "BK-" . strtoupper(substr(md5(time()), 0, 6));
         $uid = $_SESSION['user_id'];
         
-        $stmt = $conn->prepare("INSERT INTO bookings (ref_number, user_id, cottage_name, tour_type, check_in, total_price, status) VALUES (?, ?, ?, ?, ?, ?, 'Pending')");
-        $stmt->bind_param("sisssd", $ref, $uid, $_SESSION['booking']['cottage_name'], $_SESSION['booking']['tour_type'], $_SESSION['booking']['date'], $_SESSION['booking']['final_price']);
+        $proof_path = null;
+        if (isset($_FILES['payment_proof']) && $_FILES['payment_proof']['error'] == 0) {
+            $allowed = ['jpg', 'jpeg', 'png', 'pdf'];
+            $filename = $_FILES['payment_proof']['name'];
+            $filetype = pathinfo($filename, PATHINFO_EXTENSION);
+            
+            if (in_array(strtolower($filetype), $allowed)) {
+                $new_filename = "proof_" . time() . "." . $filetype;
+                $target = "uploads/" . $new_filename;
+                
+                if (move_uploaded_file($_FILES['payment_proof']['tmp_name'], $target)) {
+                    $proof_path = $target;
+                }
+            }
+        }
+
+        $stmt = $conn->prepare("INSERT INTO bookings (ref_number, user_id, cottage_name, tour_type, check_in, total_price, status, payment_proof) VALUES (?, ?, ?, ?, ?, ?, 'Pending', ?)");
+        $stmt->bind_param("sisssds", $ref, $uid, $_SESSION['booking']['cottage_name'], $_SESSION['booking']['tour_type'], $_SESSION['booking']['date'], $_SESSION['booking']['final_price'], $proof_path);
         
         if($stmt->execute()) {
             $_SESSION['booking']['ref'] = $ref;
@@ -289,8 +304,9 @@ $step = $_SESSION['booking']['step'];
         <?php if ($step == 4): ?>
             <div class="max-w-lg mx-auto bg-white rounded-xl shadow-2xl overflow-hidden">
                 <div class="bg-gray-900 p-6 text-white text-center">
-                    <h2 class="text-xl font-bold uppercase tracking-wider">Booking Summary</h2>
+                    <h2 class="text-xl font-bold uppercase tracking-wider">Confirm & Pay</h2>
                 </div>
+                
                 <div class="p-8 space-y-4">
                     <div class="flex justify-between border-b border-dashed pb-3">
                         <span class="text-gray-500">Cottage</span>
@@ -301,24 +317,32 @@ $step = $_SESSION['booking']['step'];
                         <span class="font-bold text-gray-800"><?= date('F j, Y', strtotime($_SESSION['booking']['date'])) ?></span>
                     </div>
                     <div class="flex justify-between border-b border-dashed pb-3">
-                        <span class="text-gray-500">Type</span>
-                        <span class="font-bold text-gray-800"><?= $_SESSION['booking']['tour_type'] ?></span>
+                        <span class="text-gray-500">Total Amount</span>
+                        <span class="font-extrabold text-xl text-cyan-700">₱<?= number_format($_SESSION['booking']['final_price']) ?></span>
                     </div>
-                    <div class="flex justify-between border-b border-dashed pb-3">
-                        <span class="text-gray-500">Contact</span>
-                        <span class="font-bold text-gray-800"><?= $_SESSION['booking']['contact'] ?></span>
-                    </div>
-                    <div class="bg-cyan-50 p-4 rounded-lg flex justify-between items-center mt-4">
-                        <span class="font-bold text-cyan-800">Total Amount</span>
-                        <span class="font-extrabold text-2xl text-cyan-700">₱<?= number_format($_SESSION['booking']['final_price']) ?></span>
+
+                    <div class="bg-blue-50 p-4 rounded-lg border border-blue-100 text-sm mt-4">
+                        <p class="font-bold text-blue-800 mb-2">Payment Required</p>
+                        <p class="text-gray-600 mb-1">Please send your payment via GCash</p>
+                        <ul class="list-disc pl-5 text-gray-700 font-mono mb-3">
+                            <li>GCash: 09918420591 Jh***** J** G.</li>
+                        </ul>
+                        <p class="text-xs text-gray-500">Upload your screenshot below to confirm your reservation.</p>
                     </div>
                 </div>
-                <div class="p-6 bg-gray-50 border-t flex gap-4">
-                    <a href="?action=new" class="w-1/2 py-3 text-center border bg-white text-gray-600 rounded-lg hover:bg-gray-100 font-bold">Cancel</a>
-                    <form method="POST" class="w-1/2">
-                        <button type="submit" name="step4" class="w-full bg-green-500 text-white py-3 rounded-lg font-bold shadow hover:bg-green-600">Confirm Reservation</button>
-                    </form>
-                </div>
+
+                <form method="POST" enctype="multipart/form-data" class="p-6 bg-gray-50 border-t">
+                    <div class="mb-4">
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Upload Proof of Payment</label>
+                        <input type="file" name="payment_proof" required accept="image/*" 
+                               class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-cyan-50 file:text-cyan-700 hover:file:bg-cyan-100 border border-gray-300 rounded-lg">
+                    </div>
+
+                    <div class="flex gap-4 mt-6">
+                        <a href="?action=new" class="w-1/2 py-3 text-center border bg-white text-gray-600 rounded-lg hover:bg-gray-100 font-bold">Cancel</a>
+                        <button type="submit" name="step4" class="w-1/2 bg-green-500 text-white py-3 rounded-lg font-bold shadow hover:bg-green-600">Submit Payment</button>
+                    </div>
+                </form>
             </div>
         <?php endif; ?>
 
